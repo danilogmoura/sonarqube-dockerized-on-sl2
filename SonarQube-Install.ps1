@@ -31,24 +31,26 @@ if (-not (Test-Path $distroPath)) {
 }
 
 # Importar a imagem baixada para o WSL
-wsl --import $distroName $distroPath $alpineFilePath
+wsl --import $distroName $distroPath $alpineFilePath > $null
 
 # Remover o arquivo tar.gz após a importação
 Remove-Item $alpineFilePath
 
 # Testar a instalação
-wsl -d $distroName -- echo "`r`nAlpine Linux $version $architecture instalado com sucesso!"
+Write-Host "Alpine Linux $version $architecture instalado com sucesso!" -ForegroundColor Green
 
 # Instalando o Docker
-wsl -d $distroName -- sysctl -w vm.max_map_count=262144
+Write-Host "Atualizando o sistema e instalando o Docker..." -ForegroundColor Green
+wsl -d $distroName -- sysctl -w vm.max_map_count=262144 > $null
 
-wsl -d $distroName -- apk update 
-wsl -d $distroName -- apk upgrade 
+wsl -d $distroName -- apk update > $null
+wsl -d $distroName -- apk upgrade > $null
 
-wsl -d $distroName -- apk add docker
+wsl -d $distroName -- apk add docker > $null
 Start-Sleep -Seconds 5
 
-wsl -d $distroName -- dockerd &
+# Inicia o daemon do Docker na distribuição WSL
+Start-Job -ScriptBlock { wsl -d $using:distroName -- dockerd } > $null
 Start-Sleep -Seconds 5
 
 # Executa o comando 'docker version' no WSL e captura a saída
@@ -73,8 +75,8 @@ try {
         # Exibindo a versão do cliente e do servidor
         $clientVersion = $dockerVersionLines | Where-Object { $_ -match "Version:.*" } | Select-Object -First 1
         $serverVersion = $dockerVersionLines | Where-Object { $_ -match "Version:.*" } | Select-Object -Last 1
-        Write-Host "Versão do Cliente: $clientVersion" -ForegroundColor Green
-        Write-Host "Versão do Servidor: $serverVersion" -ForegroundColor Green
+        Write-Host "Versão do Cliente: $clientVersion" -ForegroundColor Yellow
+        Write-Host "Versão do Servidor: $serverVersion" -ForegroundColor Yellow
     }
 }
 catch {
@@ -83,49 +85,40 @@ catch {
 }
 
 # Instalando o Docker Compose
-wsl -d $distroName -- apk add docker docker-cli-compose
+wsl -d $distroName -- apk add docker docker-cli-compose > $null
 
 # Copia o arquivo docker-compose.yml para a pasta /root do Alpine
 wsl -d $distroName -- cp ./compose/docker-compose.yml /root/docker-compose.yml
 
-# wsl -d $distroName -- 
-wsl -d $distroName -- ls /root
+Write-Host "`r`nInstalação concluída. O Docker e o Docker Compose foram instalados e o SonarQube está pronto para ser inicializado." -ForegroundColor Green
+write-host "Baixando todos os containers do SonarQube... Aguarde um momento...`r`n" -ForegroundColor Yellow
 
-# Iniciando o SonarQube com o Docker Compose
-wsl -d sonarqube -- docker-compose -f /root/docker-compose.yml up -d
+wsl -d $distroName -- docker-compose -f /root/docker-compose.yml up -d *> $null
+Start-Sleep -Seconds 60
 
-# Simulação da saída do comando, substitua essa parte pela captura real do seu comando docker-compose
-$output = @"
-[+] Running 7/7
- ✔ Network root_default                Created
- ✔ Volume "root_sonarqube_db"          Created
- ✔ Volume "root_sonarqube_data"        Created
- ✔ Volume "root_sonarqube_extensions"  Created
- ✔ Volume "root_sonarqube_logs"        Created
- ✔ Container sonarqube_db              Started
- ✔ Container sonarqube                 Started
-"@
+# Obtém a lista de contêineres Docker em execução
+$containers = wsl -d $distroName -- docker ps --format "{{.Names}}:{{.Status}}"
 
-# Separa as linhas e verifica apenas as últimas 7
-$lines = $output -split "`n" | Select-Object -Last 7
+# Inicializa as variáveis de status
+$sonarqubeUp = $false
+$sonarqubeDbUp = $false
 
-# Variável para manter o status de sucesso
-$allSuccessful = $true
-
-foreach ($line in $lines) {
-    if (-not($line -match "✔")) {
-        $allSuccessful = $false
-        Write-Host "`r`nFalha detectada na linha: $line" -ForegroundColor Red
+# Itera sobre cada contêiner para verificar os nomes e status
+foreach ($container in $containers) {
+    if ($container -like "sonarqube:*Up*") {
+        $sonarqubeUp = $true
+    }
+    elseif ($container -like "sonarqube_db:*Up*") {
+        $sonarqubeDbUp = $true
     }
 }
 
-if ($allSuccessful) {
-    Write-Host "`r`nTodos os serviços (networks, volumes, containers) foram criados ou iniciados com sucesso." -ForegroundColor Green
+# Verifica se ambos os contêineres estão com o status 'Up'
+if ($sonarqubeUp -and $sonarqubeDbUp) {
+    Write-Host "Os contêineres 'sonarqube' e 'sonarqube_db' estão rodando." -ForegroundColor Green
 }
 else {
-    Write-Host "`r`nAlguns serviços não foram iniciados corretamente." -ForegroundColor Red
-    exit
+    Write-Host "Um ou ambos os contêineres 'sonarqube' e 'sonarqube_db' NÃO estão rodando." -ForegroundColor Red
 }
 
-
-Write-Host "`r`nInstalação concluida, o serviço está ON, quando precisar reiniciar user o script 'SonarQube-Start.ps1' " -ForegroundColor Green
+Write-Host "Instalação concluida e o SonarQube foi inicializado http://localhost:9000/`r`nQuando precisar reiniciar user o script 'SonarQube-Start.ps1'`r`n" -ForegroundColor Green
