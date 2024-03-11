@@ -1,6 +1,6 @@
-# Configuração do Alpine Linux no WSL para SonarQube
+# Instalador do SonarQube com Docker em Alpine Linux
 
-Este script automatiza o processo de configuração para executar o SonarQube dentro do Ambiente de Subsistema do Windows para Linux (WSL), utilizando o Alpine Linux como distribuição base. Ele também instala o Docker e o Docker Compose para facilitar a implantação em contêineres do SonarQube.
+Este projeto automatiza a configuração do SonarQube em Alpine Linux usando o Docker dentro do Subsistema Windows para Linux (WSL). Ele simplifica o processo de baixar a imagem do Alpine Linux, configurar o Docker e executar o SonarQube em um ambiente conteinerizado.
 
 ## Pré-requisitos
 
@@ -10,17 +10,21 @@ Antes de executar este script, certifique-se de ter o seguinte:
 - O PowerShell instalado em seu computador com Windows.
 - Acesso à internet para baixar o Alpine Linux e os pacotes do Docker.
 
-## Instruções
+## Instalação
 
-1. **Baixe o Script**: Copie o script fornecido neste repositório.
+1. **Definir Variáveis Básicas**: O script começa definindo variáveis essenciais como a versão do Alpine Linux, arquitetura (que pode ser ajustada para diferentes hardwares como `armhf`, `aarch64`, etc.) e o nome base do modelo.
 
-2. **Abra o PowerShell**: Inicie o PowerShell com privilégios de administrador.
+2. **Baixar o Alpine Linux**: Ele constrói uma URL para baixar o arquivo tar.gz do Alpine Linux para a versão e arquitetura especificadas. Em seguida, verifica se o diretório `.wsl` existe no perfil do usuário, criando-o se necessário, e baixa a imagem do Alpine Linux para lá.
 
-3. **Execute o Script**: Execute o script no PowerShell. Você pode fazer isso navegando até o diretório onde o script está salvo e executando-o usando `.\nome_do_script.ps1`.
+3. **Importar a Imagem do Alpine para o WSL**: Após o download, o script cria um diretório para a distribuição dentro de `.wsl`, se ainda não existir. Então, importa a imagem baixada do Alpine para o WSL, atribuindo a ela o nome `sonarqube`.
 
-4. **Siga as Instruções na Tela**: O script solicitará as ações necessárias, como confirmar a instalação e fornecer permissões administrativas.
+4. **Instalar o Docker**: Com o Alpine Linux configurado, o script procede à instalação do Docker atualizando o índice de pacotes, atualizando o sistema e instalando o Docker junto com dependências necessárias. Ajusta os parâmetros do sistema para suportar o Docker e inicia o daemon do Docker.
 
-5. **Verifique a Instalação**: Após a conclusão do script, verifique se o SonarQube e o Docker estão instalados corretamente, seguindo as instruções fornecidas.
+5. **Verificar Instalação do Docker**: Para garantir que o Docker está corretamente instalado e em execução, o script executa o comando `docker version`, verificando os componentes cliente e servidor. Ele exibe as versões se ambas as verificações passarem, indicando uma configuração bem-sucedida.
+
+6. **Instalar o Docker Compose**: Além disso, ele instala o Docker Compose usando o gerenciador de pacotes do Alpine.
+
+7. **Configurar o SonarQube**: O script copia um arquivo `docker-compose.yml`, que deve definir o serviço SonarQube, para o diretório raiz do Alpine. Ele lista os conteúdos de `/
 
 ## Visão Geral do Script
 
@@ -30,6 +34,39 @@ O script realiza as seguintes tarefas:
 - Configura a distribuição do Alpine Linux dentro do ambiente WSL.
 - Instala o Docker e o Docker Compose para facilitar a execução do SonarQube em contêineres.
 - Verifica a instalação bem-sucedida do Docker e do Docker Compose.
+
+# Iniciando o Serviço SonarQube
+
+Após instalar o SonarQube conforme as instruções de instalação acima, você pode usar o script fornecido para iniciar o serviço SonarQube.
+
+## Script para Iniciar o SonarQube
+
+O script `SonarQube-Start.ps1` é projetado para iniciar o serviço SonarQube usando o Docker dentro da sua distribuição WSL. As etapas realizadas pelo script são:
+
+1. Define o `vm.max_map_count` para um valor apropriado necessário pelo SonarQube.
+2. Inicia o daemon do Docker em segundo plano.
+3. Aguarda alguns segundos para garantir que o daemon do Docker tenha sido iniciado.
+4. Usa o `docker-compose` para lançar os serviços definidos no arquivo `docker-compose.yml`.
+5. Exibe uma mensagem de confirmação uma vez que o script tenha sido executado com sucesso.
+
+## Uso
+
+1. Navegue até o diretório que contém o script `SonarQube-Start.ps1`.
+2. Execute o script digitando `./SonarQube-Start.ps1` no seu PowerShell.
+
+Este script deve ser executado após o script de configuração inicial ter sido executado com sucesso e sempre que você desejar iniciar o serviço SonarQube.
+
+
+## Estrutura de Arquivos
+
+O diretório do seu projeto deve ter a seguinte aparência:
+
+SONARQUBE-DOCKERIZED-ON-SL2 <br />
+├── compose <br />
+│ └── docker-compose.yml <br />
+├── Install-AlpineWSL.ps1 <br />
+├── README.md <br />
+└── SonarQube-Start.ps1 <br />
 
 ## Observações
 
@@ -44,5 +81,4 @@ Este script é fornecido como está, sem qualquer garantia. Use por sua própria
 
 Este script está licenciado sob a [Licença MIT](LICENSE).
 
----
-*Este README foi gerado com base no script fornecido. Por favor, verifique sua precisão e relevância antes de utilizá-lo em seu repositório.*
+
