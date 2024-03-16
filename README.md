@@ -77,8 +77,4 @@ SONARQUBE-DOCKERIZED-ON-SL2 <br />
 
 Este script é fornecido como está, sem qualquer garantia. Use por sua própria conta e risco. Certifique-se de revisar o script e entender suas ações antes de executá-lo.
 
-## Licença
-
-Este script está licenciado sob a [Licença MIT](LICENSE).
-
 
