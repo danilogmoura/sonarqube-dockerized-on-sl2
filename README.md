@@ -41,7 +41,7 @@ Após instalar o SonarQube conforme as instruções de instalação acima, você
 
 ## Script para Iniciar o SonarQube
 
-O script `SonarQube-Start.ps1` é projetado para iniciar o serviço SonarQube usando o Docker dentro da sua distribuição WSL. As etapas realizadas pelo script são:
+O script `Start.ps1` é projetado para iniciar o serviço SonarQube usando o Docker dentro da sua distribuição WSL. As etapas realizadas pelo script são:
 
 1. Define o `vm.max_map_count` para um valor apropriado necessário pelo SonarQube.
 2. Inicia o daemon do Docker em segundo plano.
@@ -51,8 +51,8 @@ O script `SonarQube-Start.ps1` é projetado para iniciar o serviço SonarQube us
 
 ## Uso
 
-1. Navegue até o diretório que contém o script `SonarQube-Start.ps1`.
-2. Execute o script digitando `./SonarQube-Start.ps1` no seu PowerShell.
+1. Navegue até o diretório que contém o script `Start.ps1`.
+2. Execute o script digitando `./Start.ps1` no seu PowerShell.
 
 Este script deve ser executado após o script de configuração inicial ter sido executado com sucesso e sempre que você desejar iniciar o serviço SonarQube.
 
@@ -64,9 +64,9 @@ O diretório do seu projeto deve ter a seguinte aparência:
 SONARQUBE-DOCKERIZED-ON-SL2 <br />
 ├── compose <br />
 │ └── docker-compose.yml <br />
-├── Install-AlpineWSL.ps1 <br />
 ├── README.md <br />
-└── SonarQube-Start.ps1 <br />
+├── Install.ps1 <br />
+└── Start.ps1 <br />
 
 ## Observações
 
